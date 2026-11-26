@@ -1,13 +1,32 @@
 import random
+import sqlite3
 from pathlib import Path
 
 from flask import Flask, jsonify, send_from_directory
 
-DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+BASE_DIR = Path(__file__).resolve().parent
+DIST = BASE_DIR.parent / "frontend" / "dist"
+DATABASE = BASE_DIR / "scans.sqlite3"
 app = Flask(__name__, static_folder=None)
 
-# "database" sederhana di memori (reset kalau server dimatikan)
-total_scan = 0
+
+def init_database():
+    with sqlite3.connect(DATABASE) as connection:
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS percobaan (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                dibuat_pada TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+
+
+def jumlah_percobaan():
+    with sqlite3.connect(DATABASE) as connection:
+        return connection.execute("SELECT COUNT(*) FROM percobaan").fetchone()[0]
+
+init_database()
 
 # Daftar hewan yang bisa keluar secara acak.
 HEWAN = [
@@ -114,18 +133,24 @@ HEWAN = [
 ]
 
 
+@app.get("/api/stats")
+def stats():
+    # Jumlah seluruh percobaan yang tersimpan secara permanen.
+    return jsonify(total=jumlah_percobaan())
+
 @app.get("/api/verdict")
 def verdict():
     """Hasil final setelah kedip 2 kali. Dipilih acak dari daftar hewan 😄"""
-    global total_scan
-    total_scan += 1
+    with sqlite3.connect(DATABASE, timeout=10) as connection:
+        connection.execute("INSERT INTO percobaan DEFAULT VALUES")
+        total = connection.execute("SELECT COUNT(*) FROM percobaan").fetchone()[0]
     pilihan = random.choice(HEWAN)
     return jsonify(
         hewan=pilihan["hewan"],
         emoji=pilihan["emoji"],
         suara=pilihan["suara"],
         komentar=random.choice(pilihan["komentar"]),
-        total=total_scan,
+        total=total,
     )
 
 

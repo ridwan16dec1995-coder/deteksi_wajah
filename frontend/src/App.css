@@ -19,6 +19,14 @@ body {
 }
 
 .judul { font-size: clamp(1.4rem, 5vw, 2rem); }
+.jumlah-pencoba {
+  padding: 8px 16px;
+  border: 1px solid rgba(255, 209, 102, .5);
+  border-radius: 999px;
+  background: rgba(255, 209, 102, .12);
+  color: #ffd166;
+  font-weight: 700;
+}
 
 /* ---------- kamera ---------- */
 .kamera {

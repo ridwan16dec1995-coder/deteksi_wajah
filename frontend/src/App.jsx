@@ -60,6 +60,7 @@ export default function App() {
   const [adaWajah, setAdaWajah] = useState(false);
   const [kedip, setKedip] = useState(0);
   const [hasil, setHasil] = useState(null);
+  const [totalPercobaan, setTotalPercobaan] = useState(null);
 
   const tampilkanHasil = useCallback(async () => {
     if (doneRef.current) return;
@@ -79,6 +80,7 @@ export default function App() {
       window.clearTimeout(timeout);
     }
     setHasil(data);
+    if (Number.isInteger(data.total)) setTotalPercobaan(data.total);
     putarSuara(data.suara || "hore!");
   }, []);
 
@@ -125,6 +127,26 @@ export default function App() {
     };
   }, [tampilkanHasil]);
 
+  useEffect(() => {
+    let batal = false;
+    fetch("/api/stats")
+      .then((response) => {
+        if (!response.ok) throw new Error("Statistik tidak tersedia");
+        return response.json();
+      })
+      .then((data) => {
+        if (!batal && Number.isInteger(data.total)) {
+          setTotalPercobaan(data.total);
+        }
+      })
+      .catch(() => {
+        // Statistik tetap bisa ditampilkan setelah backend tersedia.
+      });
+    return () => {
+      batal = true;
+    };
+  }, []);
+
   function ulang() {
     doneRef.current = false;
     detectorRef.current?.reset();
@@ -142,6 +164,9 @@ export default function App() {
   return (
     <main className="app">
       <h1 className="judul">Detektor Kemiripan Hewan 🔍</h1>
+      <p className="jumlah-pencoba" aria-live="polite">
+        Sudah dicoba {totalPercobaan ?? "…"} kali 🐾
+      </p>
 
       <div className={`kamera ${status === "done" ? "beku" : ""}`}>
         <video ref={videoRef} playsInline muted />
@@ -181,8 +206,8 @@ export default function App() {
           <button onClick={() => putarSuara(hasil.suara || "hore!")}>
             Putar suara 🔊
           </button>
-          {hasil.total && (
-            <p className="kecil">Kamu orang ke-{hasil.total} yang kedip 2x di sini 🐾</p>
+          {Number.isInteger(totalPercobaan) && (
+            <p className="kecil">Sudah dicoba {totalPercobaan} kali secara keseluruhan 🐾</p>
           )}
           <button onClick={ulang}>Coba lagi 🔄</button>
         </section>
