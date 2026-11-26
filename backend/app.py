@@ -100,6 +100,17 @@ HEWAN = [
             "Kepala nengok kanan-kiri kayak lagi ngecek situasi.",
         ],
     },
+    {
+        "hewan": "Monyet",
+        "emoji": "🐵",
+        "suara": "uh uh ah!",
+        "komentar": [
+            "Lincah, jahil, dan selalu punya ide buat seru-seruan!",
+            "Kalau ada pisang, fokusmu langsung meningkat 200 persen.",
+            "Suka memanjat tantangan—dan mungkin juga pohon.",
+            "Energinya rame, senyumnya bikin suasana jadi ceria.",
+        ],
+    },
 ]
 
 

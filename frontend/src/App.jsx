@@ -2,6 +2,27 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { startBlinkDetection } from "./blink";
 import "./App.css";
 
+function putarSuara(teks) {
+  if (!("speechSynthesis" in window) || !teks) return;
+
+  // Hentikan suara sebelumnya supaya suara hasil terbaru langsung terdengar.
+  window.speechSynthesis.cancel();
+  // Volume Web Speech API maksimal 1; tempo lebih pelan dan pengulangan
+  // membuat suara hewan terdengar lebih tegas dan mudah ditangkap.
+  const ucapan = new SpeechSynthesisUtterance(`${teks} ${teks}`);
+  ucapan.lang = "id-ID";
+  ucapan.rate = 0.82;
+  ucapan.pitch = 1.15;
+  ucapan.volume = 1;
+
+  const suaraIndonesia = window.speechSynthesis
+    .getVoices()
+    .find((suara) => suara.lang.toLowerCase().startsWith("id"));
+  if (suaraIndonesia) ucapan.voice = suaraIndonesia;
+
+  window.speechSynthesis.speak(ucapan);
+}
+
 const CADANGAN = [
   {
     hewan: "Anjing",
@@ -46,21 +67,19 @@ export default function App() {
     setStatus("done");
 
     let data = CADANGAN[Math.floor(Math.random() * CADANGAN.length)];
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 2000);
     try {
-      const r = await fetch("/api/verdict"); // dari Python (Flask)
+      const r = await fetch("/api/verdict", { signal: controller.signal });
+      if (!r.ok) throw new Error("Gagal mengambil hasil dari server.");
       data = await r.json();
     } catch {
-      /* backend mati -> pakai hasil cadangan */
+      /* backend lambat atau mati -> pakai hasil cadangan */
+    } finally {
+      window.clearTimeout(timeout);
     }
     setHasil(data);
-
-    try {
-      const u = new SpeechSynthesisUtterance(data.suara || "hore!");
-      u.lang = "id-ID";
-      speechSynthesis.speak(u);
-    } catch {
-      /* tidak didukung, abaikan */
-    }
+    putarSuara(data.suara || "hore!");
   }, []);
 
   useEffect(() => {
@@ -159,6 +178,9 @@ export default function App() {
             Kamu mirip <b>{hasil.hewan}</b>! {hasil.emoji}
           </h2>
           <p className="komentar">{hasil.komentar}</p>
+          <button onClick={() => putarSuara(hasil.suara || "hore!")}>
+            Putar suara 🔊
+          </button>
           {hasil.total && (
             <p className="kecil">Kamu orang ke-{hasil.total} yang kedip 2x di sini 🐾</p>
           )}
