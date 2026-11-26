@@ -2,12 +2,32 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { startBlinkDetection } from "./blink";
 import "./App.css";
 
-const HASIL_CADANGAN = {
-  hewan: "Anjing",
-  emoji: "🐶",
-  komentar: "Matanya berbinar, setianya nggak diragukan lagi!",
-  total: null,
-};
+const CADANGAN = [
+  {
+    hewan: "Anjing",
+    emoji: "🐶",
+    suara: "guk guk guk!",
+    komentar: "Matanya berbinar, setianya nggak diragukan lagi!",
+  },
+  {
+    hewan: "Kucing",
+    emoji: "🐱",
+    suara: "meong meong!",
+    komentar: "Anggun, mandiri, dan agak susah diajak matin-matin.",
+  },
+  {
+    hewan: "Kelinci",
+    emoji: "🐰",
+    suara: "nguuut~",
+    komentar: "Lucunya bikin pengen dipeluk terus!",
+  },
+  {
+    hewan: "Singa",
+    emoji: "🦁",
+    suara: "RAAAWR!",
+    komentar: "Aura pemimpinnya udah keliatan dari sini!",
+  },
+];
 
 export default function App() {
   const videoRef = useRef(null);
@@ -25,7 +45,7 @@ export default function App() {
     doneRef.current = true;
     setStatus("done");
 
-    let data = HASIL_CADANGAN;
+    let data = CADANGAN[Math.floor(Math.random() * CADANGAN.length)];
     try {
       const r = await fetch("/api/verdict"); // dari Python (Flask)
       data = await r.json();
@@ -35,7 +55,7 @@ export default function App() {
     setHasil(data);
 
     try {
-      const u = new SpeechSynthesisUtterance("guk guk guk!");
+      const u = new SpeechSynthesisUtterance(data.suara || "hore!");
       u.lang = "id-ID";
       speechSynthesis.speak(u);
     } catch {
@@ -140,7 +160,7 @@ export default function App() {
           </h2>
           <p className="komentar">{hasil.komentar}</p>
           {hasil.total && (
-            <p className="kecil">Sudah {hasil.total}x orang terdeteksi mirip anjing 🐕</p>
+            <p className="kecil">Kamu orang ke-{hasil.total} yang kedip 2x di sini 🐾</p>
           )}
           <button onClick={ulang}>Coba lagi 🔄</button>
         </section>
